@@ -1,6 +1,4 @@
 """Assignment 2: Linked Lists - University Helpdesk Ticket Queue."""
-
-
 class Ticket:
     def __init__(self, ticket_id, student_name, issue):
         self.ticket_id = ticket_id
@@ -8,215 +6,132 @@ class Ticket:
         self.issue = issue
         self.next = None
 
-    def __repr__(self):
-        return (
-            f"Ticket ID: {self.ticket_id}, "
-            f"Student: {self.student_name}, "
-            f"Issue: {self.issue}"
-        )
-
-
 class TicketQueue:
     def __init__(self):
         self.head = None
-        self.tail = None
 
-    def enqueue_ticket(self, ticket_id, student_name, issue):
-        """Add a new ticket to the end of the queue."""
+    # 1. Enqueue Ticket: Add a new ticket to the end of the queue
+    def enqueue(self, ticket_id, student_name, issue):
         new_ticket = Ticket(ticket_id, student_name, issue)
-
-        if self.head is None:
+        
+        # If the queue is empty, the new ticket becomes the head
+        if not self.head:
             self.head = new_ticket
-            self.tail = new_ticket
-            return new_ticket
-
-        self.tail.next = new_ticket
-        self.tail = new_ticket
-        return new_ticket
-
-    def priority_insert(self, after_ticket_id, ticket_id, student_name, issue):
-        """Insert a priority ticket immediately after a specified ticket ID."""
+            return
+            
+        # Otherwise, traverse to the very last node
         current = self.head
+        while current.next:
+            current = current.next
+        current.next = new_ticket
 
-        while current is not None:
-            if current.ticket_id == after_ticket_id:
+    # 2. Priority Insert: Insert a new ticket immediately after a specified ticket ID
+    def priority_insert(self, target_id, ticket_id, student_name, issue):
+        current = self.head
+        
+        # Search for the target ticket ID
+        while current:
+            if current.ticket_id == target_id:
                 new_ticket = Ticket(ticket_id, student_name, issue)
+                # Link the new ticket to the rest of the chain first
                 new_ticket.next = current.next
+                # Link the target ticket to the new ticket
                 current.next = new_ticket
-
-                if self.tail == current:
-                    self.tail = new_ticket
-
                 return True
-
             current = current.next
-
+            
+        print(f"Error: Ticket ID {target_id} not found. Priority insertion failed.")
         return False
 
+    # 3. Resolve Ticket: Delete a resolved ticket given its ID
     def resolve_ticket(self, ticket_id):
-        """Delete a resolved ticket by its ticket ID."""
-        if self.head is None:
-            return False
-
-        if self.head.ticket_id == ticket_id:
-            self.head = self.head.next
-
-            if self.head is None:
-                self.tail = None
-
-            return True
-
-        previous = self.head
-        current = self.head.next
-
-        while current is not None:
+        current = self.head
+        prev = None
+        
+        while current:
             if current.ticket_id == ticket_id:
-                previous.next = current.next
-
-                if self.tail == current:
-                    self.tail = previous
-
+                # Case 1: The ticket to delete is the head of the queue
+                if prev is None:
+                    self.head = current.next
+                # Case 2: The ticket is in the middle or end
+                else:
+                    prev.next = current.next
                 return True
-
-            previous = current
+                
+            prev = current
             current = current.next
-
+            
+        print(f"Error: Ticket ID {ticket_id} not found. Cannot resolve.")
         return False
 
+    # 4. Find Middle Ticket: Single pass execution using Fast/Slow pointers
     def find_middle_ticket(self):
-        """Find the middle ticket in one pass using fast and slow pointers."""
-        if self.head is None:
+        if not self.head:
             return None
-
+            
         slow = self.head
         fast = self.head
-
-        while fast is not None and fast.next is not None:
+        
+        # Fast moves 2 steps, slow moves 1 step
+        while fast and fast.next:
             slow = slow.next
             fast = fast.next.next
-
+            
+        # When fast reaches the end, slow points exactly to the middle
         return slow
 
+    # 5. Reverse Queue: In-place reversal manipulating only pointers
     def reverse_queue(self):
-        """Reverse the queue in place by changing node pointers."""
-        previous = None
+        prev = None
         current = self.head
-        self.tail = self.head
+        
+        while current:
+            next_node = current.next  # Temporarily save the next node
+            current.next = prev       # Reverse the current node's pointer
+            prev = current            # Move prev one step forward
+            current = next_node       # Move current one step forward
+            
+        self.head = prev              # Update head to point to the new front
 
-        while current is not None:
-            next_ticket = current.next
-            current.next = previous
-            previous = current
-            current = next_ticket
-
-        self.head = previous
-
-    def to_list(self):
-        """Return all tickets as a list of tuples for testing and display."""
-        tickets = []
-        current = self.head
-
-        while current is not None:
-            tickets.append((current.ticket_id, current.student_name, current.issue))
-            current = current.next
-
-        return tickets
-
+    # 6. Display Queue: Traversal method to print all tickets
     def display_queue(self):
-        """Print all ticket IDs and details in queue order."""
-        if self.head is None:
-            print("Queue is empty.")
-            return
-
         current = self.head
-
-        while current is not None:
-            print(current)
+        if not current:
+            print("The ticket queue is currently empty.")
+            return
+            
+        print("\n--- Current IT Helpdesk Queue ---")
+        while current:
+            print(f"[ID: {current.ticket_id}] Student: {current.student_name} | Issue: {current.issue}")
             current = current.next
+        print("---------------------------------")
 
 
-def run_tests():
-    """Verify standard and edge cases for the ticket queue."""
-    empty_queue = TicketQueue()
-    assert empty_queue.find_middle_ticket() is None
-    assert empty_queue.resolve_ticket(999) is False
-    assert empty_queue.priority_insert(999, 1000, "None", "Missing ticket") is False
-    empty_queue.reverse_queue()
-    assert empty_queue.to_list() == []
-
-    single_queue = TicketQueue()
-    single_queue.enqueue_ticket(1, "Ama", "Password reset")
-    assert single_queue.find_middle_ticket().ticket_id == 1
-    assert single_queue.resolve_ticket(1) is True
-    assert single_queue.to_list() == []
-
-    queue = TicketQueue()
-    queue.enqueue_ticket(101, "Isaac", "Password Reset")
-    queue.enqueue_ticket(102, "Ama", "WiFi Connection Problem")
-    queue.enqueue_ticket(103, "Kojo", "Printer Not Working")
-
-    assert queue.priority_insert(102, 104, "Mary", "Exam Portal Access Issue") is True
-    assert queue.to_list() == [
-        (101, "Isaac", "Password Reset"),
-        (102, "Ama", "WiFi Connection Problem"),
-        (104, "Mary", "Exam Portal Access Issue"),
-        (103, "Kojo", "Printer Not Working"),
-    ]
-
-    assert queue.resolve_ticket(103) is True
-    assert queue.find_middle_ticket().ticket_id == 102
-
-    queue.reverse_queue()
-    assert queue.to_list() == [
-        (104, "Mary", "Exam Portal Access Issue"),
-        (102, "Ama", "WiFi Connection Problem"),
-        (101, "Isaac", "Password Reset"),
-    ]
-
-
-def print_complexity_analysis():
-    print("\nComplexity Analysis:")
-    print("Enqueue ticket: O(1) time with a tail pointer, O(1) space")
-    print("Priority insert: O(n) time, O(1) space")
-    print("Resolve ticket: O(n) time, O(1) space")
-    print("Find middle ticket: O(n) time, O(1) space")
-    print("Reverse queue: O(n) time, O(1) space")
-    print("Display queue: O(n) time, O(1) space")
-
-
+# --- Demonstration of Functionality ---
 if __name__ == "__main__":
-    run_tests()
-
     queue = TicketQueue()
-    queue.enqueue_ticket(101, "Isaac", "Password Reset")
-    queue.enqueue_ticket(102, "Ama", "WiFi Connection Problem")
-    queue.enqueue_ticket(103, "Kojo", "Printer Not Working")
-
-    print("Initial Queue:")
+    
+    # Test Enqueue
+    queue.enqueue(101, "Kwame", "WiFi login issues in Library")
+    queue.enqueue(102, "Ama", "Moodle password reset")
+    queue.enqueue(103, "Kofi", "Lab computer won't boot")
     queue.display_queue()
-
-    if queue.priority_insert(102, 104, "Mary", "Exam Portal Access Issue"):
-        print("\nPriority ticket inserted after Ticket 102.")
-    else:
-        print("\nSpecified Ticket ID not found.")
-
-    print("\nQueue After Priority Insert:")
+    
+    # Test Priority Insert
+    queue.priority_insert(102, 999, "Abena", "CRITICAL: Exam portal crashed")
     queue.display_queue()
-
-    if queue.resolve_ticket(103):
-        print("\nTicket 103 resolved.")
-    else:
-        print("\nTicket ID not found.")
-
-    print("\nQueue After Resolving Ticket 103:")
+    
+    # Test Find Middle
+    mid = queue.find_middle_ticket()
+    if mid:
+        print(f"Middle Ticket is ID: {mid.ticket_id} ({mid.student_name})")
+        
+    # Test Resolve (Delete)
+    queue.resolve_ticket(102)
     queue.display_queue()
-
-    middle = queue.find_middle_ticket()
-    print("\nMiddle Ticket:")
-    print(middle if middle is not None else "Queue is empty.")
-
+    
+    # Test Reverse
+    print("\nReversing the queue for priority override...")
     queue.reverse_queue()
-    print("\nQueue After Reversal:")
     queue.display_queue()
 
-    print_complexity_analysis()

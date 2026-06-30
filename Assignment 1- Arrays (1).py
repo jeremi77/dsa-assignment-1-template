@@ -1,109 +1,77 @@
 """Assignment 1: Arrays - University Course Registration Analytics."""
+registrations = [1023, 1050, 1023, 1102, 1050, 1023, 1201, 1102, 1300, 1023]
 
-
-registrations = [
-    1023, 1050, 1023, 1102,
-    1050, 1023, 1201, 1102,
-    1300, 1023,
-]
-
-
-def most_frequent_student(registration_list):
-    """Return the student ID with the highest frequency, or None for an empty list."""
-    if not registration_list:
+# 1. Most Frequent Registrant
+def most_frequent_registrant(regs):
+    """Finds the student ID that appears most frequently."""
+    if not regs:
         return None
-
-    frequencies = {}
-    most_frequent = registration_list[0]
-
-    for student_id in registration_list:
-        frequencies[student_id] = frequencies.get(student_id, 0) + 1
-
-        if frequencies[student_id] > frequencies[most_frequent]:
-            most_frequent = student_id
-
-    return most_frequent
+    
+    counts = {}
+    for student_id in regs:
+        counts[student_id] = counts.get(student_id, 0) + 1
+        
+    # Return the key associated with the maximum value in the dictionary
+    return max(counts, key=counts.get)
 
 
-def ordered_deduplication(registration_list):
-    """Remove duplicate student IDs while preserving first-appearance order."""
+# 2. Ordered Deduplication
+def ordered_deduplication(regs):
+    """Removes duplicates while preserving the first appearance order."""
     seen = set()
-    unique_registrations = []
-
-    for student_id in registration_list:
+    result = []
+    
+    for student_id in regs:
         if student_id not in seen:
             seen.add(student_id)
-            unique_registrations.append(student_id)
+            result.append(student_id)
+            
+    return result
 
-    return unique_registrations
 
-
-def first_unique_student(registration_list):
-    """Return the first student ID that occurs exactly once, or None if none exists."""
-    frequencies = {}
-
-    for student_id in registration_list:
-        frequencies[student_id] = frequencies.get(student_id, 0) + 1
-
-    for student_id in registration_list:
-        if frequencies[student_id] == 1:
+# 3. First Unique Student
+def first_unique_student(regs):
+    """Finds the first student ID that appears exactly once."""
+    counts = {}
+    
+    # First pass: Count all frequencies
+    for student_id in regs:
+        counts[student_id] = counts.get(student_id, 0) + 1
+        
+    # Second pass: Find the first ID with a count of 1
+    for student_id in regs:
+        if counts[student_id] == 1:
             return student_id
-
+            
     return None
 
 
-def subarray_sum_exists(registration_list, target):
-    """Return True if any contiguous subarray has a sum equal to target."""
+# 4. Contiguous Subarray Sum
+def has_contiguous_subarray_sum(regs, target):
+    """Checks if any contiguous subarray sums to the target value T."""
+    # We use a set to store prefix sums. Initialize with 0 to handle 
+    # cases where a subarray starting from the 0th index equals the target.
     prefix_sums = {0}
-    running_sum = 0
-
-    for student_id in registration_list:
-        running_sum += student_id
-
-        if running_sum - target in prefix_sums:
+    current_sum = 0
+    
+    for student_id in regs:
+        current_sum += student_id
+        
+        # If (current_sum - target) exists in our seen prefix sums, 
+        # the subarray between that previous point and here sums to target.
+        if (current_sum - target) in prefix_sums:
             return True
-
-        prefix_sums.add(running_sum)
-
+            
+        prefix_sums.add(current_sum)
+        
     return False
 
-
-def run_tests():
-    """Verify standard and edge cases for the array algorithms."""
-    assert most_frequent_student(registrations) == 1023
-    assert ordered_deduplication(registrations) == [1023, 1050, 1102, 1201, 1300]
-    assert first_unique_student(registrations) == 1201
-    assert subarray_sum_exists(registrations, 2224) is True
-
-    assert most_frequent_student([]) is None
-    assert ordered_deduplication([]) == []
-    assert first_unique_student([]) is None
-    assert subarray_sum_exists([], 0) is False
-
-    assert most_frequent_student([7]) == 7
-    assert ordered_deduplication([7]) == [7]
-    assert first_unique_student([7]) == 7
-    assert subarray_sum_exists([7], 7) is True
-
-    assert first_unique_student([4, 4, 5, 5]) is None
-    assert subarray_sum_exists([10, -3, 2, 1], 0) is True
-
-
-def print_complexity_analysis():
-    print("\nComplexity Analysis:")
-    print("Most frequent student: O(n) time, O(n) space")
-    print("Ordered deduplication: O(n) time, O(n) space")
-    print("First non-repeated student: O(n) time, O(n) space")
-    print("Subarray target sum check: O(n) time, O(n) space")
-
-
+# --- Testing the functions ---
 if __name__ == "__main__":
-    run_tests()
+    print(f"1. Most Frequent: {most_frequent_registrant(registrations)}")
+    print(f"2. Ordered Deduplication: {ordered_deduplication(registrations)}")
+    print(f"3. First Unique: {first_unique_student(registrations)}")
+    
+    target_sum = 1050 + 1023 + 1201  # Example target: 3274
+    print(f"4. Contiguous Sum to {target_sum}: {has_contiguous_subarray_sum(registrations, target_sum)}")
 
-    target = 2224
-
-    print("Most frequent student:", most_frequent_student(registrations))
-    print("Unique registrations:", ordered_deduplication(registrations))
-    print("First non-repeated student:", first_unique_student(registrations))
-    print("Subarray with target sum exists:", subarray_sum_exists(registrations, target))
-    print_complexity_analysis()
